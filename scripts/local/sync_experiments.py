@@ -112,6 +112,36 @@ except Exception:
     opens = closes = -1
 out["fx_carry_cycles"] = {"n": closes, "opens": opens, "closes": closes}
 
+# --- FX partial exits: realized P&L that trades.csv never records ------------
+# Live sidecar (2026-08-24 onward) + the log-reconstructed backfill of the 21
+# firings that predate it. Half-Lock's true value is the sum of these, and it
+# appears in NO trades.csv row.
+pe_live = pe_back = 0
+pe_live_sum = pe_back_sum = 0.0
+for rel, is_live in [("journal/partial_exits.jsonl", True),
+                     ("journal/partial_exits_backfill.jsonl", False)]:
+    try:
+        for line in open(os.path.join(FX, rel), errors="replace"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                amt = float(json.loads(line).get("partial_exit_pnl") or 0)
+            except Exception:
+                continue
+            if is_live:
+                pe_live += 1; pe_live_sum += amt
+            else:
+                pe_back += 1; pe_back_sum += amt
+    except Exception:
+        pass
+out["fx_partial_exits"] = {
+    "n": pe_live + pe_back,
+    "live_n": pe_live, "live_sum": round(pe_live_sum, 2),
+    "backfill_n": pe_back, "backfill_sum": round(pe_back_sum, 2),
+    "total_unjournalled": round(pe_live_sum + pe_back_sum, 2),
+}
+
 # --- comm reconciliation gap (latest go-forward line) ------------------------
 gap = resid = bal = None
 try:
