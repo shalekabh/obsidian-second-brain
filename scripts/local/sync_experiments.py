@@ -130,16 +130,70 @@ except Exception:
 out["comm_reconcile_gap"] = {"n": len([1 for _ in ()]), "gap": gap,
                              "residual": resid, "balance": bal}
 
+# --- FX trades closed since a given date, for post-change monitoring --------
+# ERAS is injected by the caller and contains ONLY validated ISO dates.
+ERAS = %(eras)s
+if ERAS:
+    try:
+        allrows = list(csv.DictReader(open(tpath)))
+    except Exception:
+        allrows = []
+    for since in ERAS:
+        n = tp = ec = 0
+        ecpnl = []
+        for r in allrows:
+            if not (r.get("close_reason") or "").strip():
+                continue
+            if (r.get("timestamp") or "")[:10] < since:
+                continue
+            n += 1
+            cr = r["close_reason"].strip()
+            if cr == "tp":
+                tp += 1
+            elif cr == "early_cut":
+                ec += 1
+                try:
+                    ecpnl.append(float(r["pnl"]))
+                except (TypeError, ValueError):
+                    pass
+        out["fx_since:" + since] = {
+            "n": n, "tp": tp, "early_cut": ec,
+            "early_cut_avg": round(sum(ecpnl) / len(ecpnl), 2) if ecpnl else None,
+        }
+
 print(json.dumps(out))
-''' % {"fx": FX, "comm": COMM}
+'''
+
+
+def collect_eras() -> list:
+    """ISO dates requested by `probe: fx_since:<date>` notes.
+
+    Each is validated as a real date before it is interpolated into the remote
+    script — the probe name is the only note-supplied value that reaches the
+    VPS, so it must not be able to carry anything but a date.
+    """
+    eras = set()
+    for note in EXP_DIR.glob("*.md"):
+        m = FM_RE.match(note.read_text(encoding="utf-8"))
+        if not m:
+            continue
+        probe = get_field(m.group(1), "probe") or ""
+        if probe.startswith("fx_since:"):
+            raw = probe.split(":", 1)[1].strip()
+            try:
+                eras.add(datetime.strptime(raw, "%Y-%m-%d").strftime("%Y-%m-%d"))
+            except ValueError:
+                print(f"  ignoring bad date in {note.name}: {raw!r}")
+    return sorted(eras)
 
 
 def fetch_metrics() -> dict:
     """Run the read-only probe script on the VPS, return parsed JSON."""
+    script = REMOTE % {"fx": FX, "comm": COMM, "eras": repr(collect_eras())}
     proc = subprocess.run(
         ["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no",
          "-o", "ConnectTimeout=20", SSH_HOST, "python3 -"],
-        input=REMOTE, capture_output=True, text=True, timeout=180,
+        input=script, capture_output=True, text=True, timeout=180,
     )
     if proc.returncode != 0:
         raise RuntimeError(f"ssh failed ({proc.returncode}): {proc.stderr.strip()[:400]}")
@@ -185,13 +239,15 @@ def main() -> int:
     rows, changed = [], 0
 
     for note in sorted(EXP_DIR.glob("*.md")):
-        if note.name.startswith("Experiment Register"):
-            continue
         text = note.read_text(encoding="utf-8")
         m = FM_RE.match(text)
         if not m:
             continue
         fm, body = m.group(1), text[m.end():]
+        # The folder also holds the register index and verdict write-ups.
+        # Only `type: experiment` notes are experiments.
+        if (get_field(fm, "type") or "").strip() != "experiment":
+            continue
 
         probe = get_field(fm, "probe")
         if not probe or probe == "manual":
