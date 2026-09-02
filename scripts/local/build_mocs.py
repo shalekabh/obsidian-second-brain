@@ -45,6 +45,11 @@ CLUSTERS = [
    "Chronological FX bot session archive, newest first. The change history behind current state."),
   ("Dev Logs/Netero Comm", "Comm Session Log — Index", "comm", "devlog",
    "Chronological comm bot session archive, newest first."),
+  ("Projects/Findings", "Findings — Index", "findings", "project",
+   "Investigation write-ups and verdict passes. Conclusions with their evidence, kept separate from "
+   "Projects/Experiments so the live registry stays a registry."),
+  ("Dev Logs/Enzo Ferrari 3D Render", "Enzo Ferrari Log — Index", "render", "devlog",
+   "Session archive for the Enzo Ferrari 3D render work. Not a trading project."),
 ]
 
 made = []
