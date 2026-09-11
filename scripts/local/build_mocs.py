@@ -45,6 +45,13 @@ CLUSTERS = [
    "Chronological FX bot session archive, newest first. The change history behind current state."),
   ("Dev Logs/Netero Comm", "Comm Session Log — Index", "comm", "devlog",
    "Chronological comm bot session archive, newest first."),
+  ("Projects/Crypto Bot", "Crypto Bot — Index", "crypto", "project",
+   "The Kraken 200dma crypto bot — distinct from Killua. Still DRY_RUN and unfunded."),
+  ("Projects/NEXEVO Solutions", "NEXEVO Solutions — Index", "nexevo", "project",
+   "The web-page business. The stated commercial goal; the skill library is its capability."),
+  ("Knowledge/Design Rules", "Design Rules — Index", "design", "knowledge",
+   "Standing rules for visual / 3D / web deliverables. Cross-project — these are NOT "
+   "trading rules; see Operating Rules for those."),
   ("Projects/Findings", "Findings — Index", "findings", "project",
    "Investigation write-ups and verdict passes. Conclusions with their evidence, kept separate from "
    "Projects/Experiments so the live registry stays a registry."),
