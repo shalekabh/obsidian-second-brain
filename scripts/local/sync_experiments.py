@@ -112,10 +112,25 @@ except Exception:
     opens = closes = -1
 out["fx_carry_cycles"] = {"n": closes, "opens": opens, "closes": closes}
 
-# --- FX partial exits: realized P&L that trades.csv never records ------------
+# --- FX partial exits: realized P&L that trades.csv did not record ------------
 # Live sidecar (2026-08-24 onward) + the log-reconstructed backfill of the 21
-# firings that predate it. Half-Lock's true value is the sum of these, and it
-# appears in NO trades.csv row.
+# firings that predate it. Until 2026-09-13 none of this reached trades.csv.
+# From 2026-09-13 pnl_monitor books every IG leg of a position, and trades.csv
+# has a partial_exit_pnl column that is ALREADY INCLUDED in pnl. A sidecar entry
+# whose deal has that column filled is journalled, so it is not counted missing.
+pe_journalled = set()
+pe_journalled_sum = 0.0
+try:
+    for r in csv.DictReader(open(tpath)):
+        v = (r.get("partial_exit_pnl") or "").strip()
+        if v:
+            try:
+                pe_journalled_sum += float(v)
+                pe_journalled.add((r.get("dealId") or "").strip())
+            except ValueError:
+                pass
+except Exception:
+    pass
 pe_live = pe_back = 0
 pe_live_sum = pe_back_sum = 0.0
 for rel, is_live in [("journal/partial_exits.jsonl", True),
@@ -126,7 +141,10 @@ for rel, is_live in [("journal/partial_exits.jsonl", True),
             if not line:
                 continue
             try:
-                amt = float(json.loads(line).get("partial_exit_pnl") or 0)
+                rec = json.loads(line)
+                if is_live and str(rec.get("deal_id") or "").strip() in pe_journalled:
+                    continue
+                amt = float(rec.get("partial_exit_pnl") or 0)
             except Exception:
                 continue
             if is_live:
@@ -140,6 +158,7 @@ out["fx_partial_exits"] = {
     "live_n": pe_live, "live_sum": round(pe_live_sum, 2),
     "backfill_n": pe_back, "backfill_sum": round(pe_back_sum, 2),
     "total_unjournalled": round(pe_live_sum + pe_back_sum, 2),
+    "journalled_n": len(pe_journalled), "journalled_sum": round(pe_journalled_sum, 2),
 }
 
 # --- comm reconciliation gap (latest go-forward line) ------------------------
