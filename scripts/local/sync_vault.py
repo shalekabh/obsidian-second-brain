@@ -60,7 +60,7 @@ RULES = [
     (r"^project_(trustmrr|.*clone)", "Ideas"),
     (r"^crypto_", "Projects/Crypto Bot"),
     (r"^(killua_|research_mean_reversion)", "Projects/Killua Trend Bot"),
-    (r"^(dashboard|infra_|security_|obsidian_)", "Projects/Infrastructure"),
+    (r"^(dashboard|infra_|security_|obsidian_|work_health|vault_|sync_)", "Projects/Infrastructure"),
     (r"^(state_current|project_goals)$", "Projects"),
     (r"^(comm_|data_integrity)", "Projects/Netero Comm Bot"),
     (r"^(fx_|carry_|journal_backup|live_evidence)", "Projects/Meruem FX Bot"),
