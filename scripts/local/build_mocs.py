@@ -47,7 +47,7 @@ CLUSTERS = [
    "Chronological comm bot session archive, newest first."),
   ("Projects/Crypto Bot", "Crypto Bot — Index", "crypto", "project",
    "The Kraken 200dma crypto bot — distinct from Killua. Still DRY_RUN and unfunded."),
-  ("Projects/NEXEVO Solutions", "NEXEVO Solutions — Index", "nexevo", "project",
+  ("Projects/NEXEVO Systems", "NEXEVO Systems — Index", "nexevo", "project",
    "The web-page business. The stated commercial goal; the skill library is its capability."),
   ("Knowledge/Design Rules", "Design Rules — Index", "design", "knowledge",
    "Standing rules for visual / 3D / web deliverables. Cross-project — these are NOT "
